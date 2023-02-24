@@ -117,6 +117,48 @@ pub mod pallet {
 			Self::deposit_event(Event::UserCreated{user: sender});
 			Ok(())
 	}
+	pub fn create_product(
+        origin: OriginFor<T>,
+        id: u64,
+        name: Vec<u8>,
+        description: Vec<u8>,
+    ) -> DispatchResult {
+        let sender = ensure_signed(origin)?;
+        ensure!(!Products::<T>::contains_key(id), Error::<T>::ProductIdExists);
 
+        let product = Product {
+            id,
+            name,
+            description,
+            owner: sender.clone(),
+            previous_owners: vec![],
+            timestamp: <frame_system::Pallet<T>>::block_number(),
+        };
+
+        Products::<T>::insert(id, product);
+        Self::deposit_event(Event::ProductCreated(sender, id));
+        Ok(())
+    }
+
+    pub fn transfer_product(
+        origin: OriginFor<T>,
+        id: u64,
+        to: T::AccountId,
+    ) -> DispatchResult {
+        let sender = ensure_signed(origin)?;
+        let mut product = Products::<T>::get(id).ok_or(Error::<T>::ProductIdNotFound)?;
+        ensure!(product.owner == sender, Error::<T>::NotProductOwner);
+
+        product.previous_owners.push(sender.clone());
+        product.owner = to.clone();
+
+        Products::<T>::insert(id, product);
+        Self::deposit_event(Event::ProductTransferred(sender, to, id));
+        Ok(())
+    }
+
+    pub fn get_product(id: u64) -> Option<Product> {
+        Products::<T>::get(id)
+    }
 }
 }
