@@ -1,0 +1,72 @@
+[package]
+name = "cargo-contract"
+version = "2.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+build = "build.rs"
+edition = "2021"
+
+license = "GPL-3.0"
+readme = "README.md"
+repository = "https://github.com/paritytech/cargo-contract"
+documentation = "https://docs.substrate.io/tutorials/v3/ink-workshop/pt1/"
+homepage = "https://www.parity.io/"
+description = "Setup and deployment tool for developing Wasm based smart contracts via ink!"
+keywords = ["wasm", "parity", "webassembly", "blockchain", "edsl"]
+categories = ["command-line-utilities", "development-tools::build-utils", "development-tools::cargo-plugins"]
+include = [
+    "Cargo.toml", "src/**/*.rs", "README.md", "LICENSE", "build.rs", "src/**/*.scale",
+]
+
+[dependencies]
+contract-build = { version = "2.1.0", path = "../build" }
+contract-metadata = { version = "2.1.0", path = "../metadata" }
+contract-transcode = { version = "2.1.0", path = "../transcode" }
+
+anyhow = "1.0.70"
+clap = { version = "4.1.14", features = ["derive", "env"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+scale = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+which = "4.4.0"
+colored = "2.0.0"
+serde = { version = "1.0.159", default-features = false, features = ["derive"] }
+serde_json = "1.0.95"
+url = { version = "2.3.1", features = ["serde"] }
+rust_decimal = "1.29"
+
+# dependencies for extrinsics (deploying and calling a contract)
+async-std = { version = "1.12.0", features = ["attributes", "tokio1"] }
+sp-core = "16.0.0"
+sp-runtime = "18.0.0"
+sp-weights = "14.0.0"
+pallet-contracts-primitives = "18.0.0"
+subxt = "0.27.1"
+hex = "0.4.3"
+jsonrpsee = { version = "0.16.2", features = ["ws-client"] }
+
+[build-dependencies]
+anyhow = "1.0.70"
+substrate-build-script-utils = "5.0.0"
+current_platform = "0.2.0"
+which = "4.4.0"
+
+[dev-dependencies]
+assert_cmd = "2.0.10"
+regex = "1.7.3"
+predicates = "3.0.1"
+tempfile = "3.4.0"
+
+[features]
+# This `std` feature is required for testing using an inline contract's metadata, because `ink!` annotates the metadata
+# generation code with `#[cfg(feature = "std")]`.
+default = ["std"]
+std = []
+
+# Enable this to execute long running tests, which usually are only run on the CI server
+#
+# Disabled by default
+test-ci-only = []
+
+# Enable this to execute tests which depend on a locally running contracts enabed chain
+# e.g.https://github.com/paritytech/substrate-contracts-node
+integration-tests = []
