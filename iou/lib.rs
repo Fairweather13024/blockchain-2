@@ -53,8 +53,8 @@ mod iou_smart_contract {
         //Creates a new ERC-20 contract with the specified initial supply
         #[ink(constructor)]
         pub fn new(total_supply: Balance) -> Self {
-            let mut balances = Mapping::default();
-            let caller = Self::env().caller();
+            let mut balances = Mapping::default(); //initialize balances mapping
+            let caller = Self::env().caller(); // add total balance to account of person who deployed the contract
             balances.insert(caller, &total_supply);
             Self::env().emit_event(Transfer {
                 from: None,
@@ -68,11 +68,22 @@ mod iou_smart_contract {
             }
         }
 
+        // allow a `caller` to add `value` tokens to the `caller`'s balance
+        #[ink(message)]
+        pub fn deposit(&mut self, amount: Balance) {
+            let caller = self.env().caller();
+            let balance = self.balances.entry(caller).or_insert(0);
+            *balance += amount;
+            self.total_supply.set(self.total_supply.get() + amount);
+        }
+
+        //get total contract token supply
         #[ink(message)]
         pub fn total_supply(&self) -> Balance {
             self.total_supply
         }
 
+        //check balance of `owner
         #[ink(message)]
         pub fn balance_of(&self, owner: AccountId) -> Balance {
             self.balance_of_impl(&owner)
@@ -95,9 +106,6 @@ mod iou_smart_contract {
         fn allowance_impl(&self, owner: &AccountId, spender: &AccountId) -> Balance {
             self.allowances.get((owner, spender)).unwrap_or_default()
         }
-
-
-
 
         /// Transfers `value` tokens on the behalf of `from` to the account `to`.
         ///
