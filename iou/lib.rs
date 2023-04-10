@@ -7,17 +7,20 @@ mod iou_smart_contract {
     #[ink(storage)]
     #[derive(Default)]
     pub struct Iou {
-        total_supply: Balance,// Total token supply
-        balances: Mapping<AccountId, Balance>,// Mapping from owner to number of owned token
+        total_supply: Balance,                 // Total token supply
+        balances: Mapping<AccountId, Balance>, // Mapping from owner to number of owned token
         allowances: Mapping<(AccountId, AccountId), Balance>,
-        due_date: u64,               // the date the IOU is due
         issuer: AccountId,           // the account ID of the IOU issuer
         recipient: AccountId,        // the account ID of the IOU recipient
         paid: bool,                  // whether the IOU has been paid or not
         partial_payment_amount: u32, // the amount of partial payment made on the IOU
     }
 
-    //token transfer 
+    #[ink(storage)]
+    pub struct IouList {
+        iou_list: Mapping<(AccountId, AccountId), Iou>,
+    }
+    //token transfer
     #[ink(event)]
     pub struct Transfer {
         #[ink(topic)]
@@ -68,6 +71,16 @@ mod iou_smart_contract {
             }
         }
 
+    //creates an IOU mapping
+    impl IouList {
+        #[ink(constructor)]
+        pub fn new() -> Self {
+            Self {
+                iou_list: Mapping::new(), // initialize iou list
+            }
+        }
+    }
+
         // allow a `caller` to add `value` tokens to the `caller`'s balance
         #[ink(message)]
         pub fn deposit(&mut self, amount: Balance) {
@@ -107,17 +120,53 @@ mod iou_smart_contract {
             self.allowances.get((owner, spender)).unwrap_or_default()
         }
 
+        #[ink(message)]
+        pub fn create_iou(
+            &mut self,
+            recipient: AccountId,
+            amount: u32,
+            due_date: u64,
+        ) -> Result<()> {
+            let caller = self.env().caller();
+
+            // Create the new IOU
+            let new_iou = Iou {
+                total_supply: amount.into(),
+                balances: Mapping::new(),
+                allowances: Mapping::new(),
+                due_date,
+                issuer: caller,
+                recipient,
+                paid: false,
+                partial_payment_amount: 0,
+            };
+
+            // Add the new IOU to the contract's list of IOUs
+            self.iou_list.push(new_iou);
+
+            // Deduct the amount from the caller's balance
+            self.balances.insert(caller, balance - amount.into());
+
+            // Increase the recipient's balance by the IOU amount
+            let recipient_balance = self.balance_of_impl(&recipient);
+            self.balances
+                .insert(recipient, recipient_balance + amount.into());
+
+            // Emit a Transfer event to indicate the movement of tokens
+            self.env().emit_event(Transfer {
+                from: Some(caller),
+                to: Some(recipient),
+                value: amount.into(),
+            });
+
+            Ok(())
+        }
         /// Transfers `value` tokens on the behalf of `from` to the account `to`.
         ///
         /// This can be used to allow a contract to transfer tokens on ones behalf and/or
         /// to charge fees in sub-currencies, for example.
         #[ink(message)]
-        pub fn transfer(
-            &mut self,
-            from: AccountId,
-            to: AccountId,
-            value: Balance,
-        ) -> Result<()> {
+        pub fn transfer(&mut self, from: AccountId, to: AccountId, value: Balance) -> Result<()> {
             let caller = self.env().caller();
             let allowance = self.allowance_impl(&from, &caller);
             if allowance < value {
