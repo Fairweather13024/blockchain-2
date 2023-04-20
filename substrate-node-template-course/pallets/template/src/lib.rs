@@ -32,66 +32,61 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
-	///Implement custom struct
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, Default, TypeInfo)]
-	pub struct UserInfo{
-		///user name stored as an array of bytes
-		pub username: Vec<u8>,
-		///number id of the user
-		pub id: i64,
-		///users about information
-		pub about_me: Vec<u8>,
+	///Company data
+	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
+	pub struct Company{
+		///number id of the company
+		pub id: u64,
+		///company name stored as an array of bytes
+		pub name: Vec<u8>,
+		///companys about information
+		pub about_me: Vec<u64>,
 	}
 
-	///storage map to interact with the node's storage
-	#[pallet::storage]
-	#[pallet::getter(fn info)]
-	pub type AccountToUserInfo<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, UserInfo, OptionQuery>;
+	///Contract data
+	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
+	pub struct SupplyContract{
+		///number id of the company
+		pub id: u64,
+		pub sellerId: u64,
+		pub buyerId: u64,
+		///companys about information
+		pub products: Vec<u64>,
+		pub delivered : bool,
+		pub IOU : u64,
+		pub contract_value : u64,
+		pub contract_fulfilled : bool,
+	}
 
+	///product data
+	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
+	pub struct Product{
+		pub id: u64,
+		pub name: Vec<u8>,
+		pub description: Vec<u8>,
+		pub owner: u64,
+		pub previous_owners: Vec<u64>,
+		pub timestamp: u64,
+	}
 
-	// ///custom struct for a product in a supply chain
-	// #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, Default, TypeInfo)]
-	// pub struct Product {
-	// 	pub id: u64,
-	// 	pub name: Vec<u8>,
-	// 	pub description: Vec<u8>,
-	// 	pub owner: T::AccountId,
-	// 	pub previous_owners: Vec<T::AccountId>,
-	// 	pub timestamp: T::Moment,
-	// }
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn products)]
-	// pub type Products<T: Config> = StorageMap<_, Blake2_128Concat, u64, Product, OptionQuery>;
-
+	///IOU data
+	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
+	pub struct IOU{
+		pub id: u64,
+		pub debtor: u64,
+		pub creditor: u64,
+		pub amount: u64,
+	}
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		UserCreated {user: T::AccountId},
-	}
+	pub enum Event<T: Config> {}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
-	pub enum Error<T> {
-		/// The username is too long
-		UsernameTooLong,
-		/// The about me is too long
-		AboutMeTooLong,
-		/// The id is too small
-		IdTooSmall,
-		/// The id is too big
-		IdTooBig,
-		// /// The product id already exists
-		// ProductIdExists,
-		// /// The product id does not exist
-		// ProductIdNotFound,
-		// /// The user is not the owner of the product
-		// NotProductOwner,
-
-	}
+	pub enum Error<T> {}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.
@@ -99,66 +94,5 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// Dispatchable calls go here!
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
-		pub fn register_user(origin: OriginFor<T>, username: Vec<u8>, id: i64, about_me: Vec<u8>) -> DispatchResult{
-			let sender = ensure_signed(origin)?;
-			ensure!(username.len() <= 32, Error::<T>::UsernameTooLong);
-			ensure!(about_me.len() <= 256, Error::<T>::AboutMeTooLong);
-			ensure!(id > 0, Error::<T>::IdTooSmall);
-			ensure!(id < 100000000, Error::<T>::IdTooBig);
-
-			let new_user = UserInfo{
-				username,
-				id,
-				about_me,
-			};
-
-			<AccountToUserInfo<T>>::insert(&sender, new_user);
-			Self::deposit_event(Event::UserCreated{user: sender});
-			Ok(())
 	}
-	// pub fn create_product(
-    //     origin: OriginFor<T>,
-    //     id: u64,
-    //     name: Vec<u8>,
-    //     description: Vec<u8>,
-    // ) -> DispatchResult {
-    //     let sender = ensure_signed(origin)?;
-    //     ensure!(!Products::<T>::contains_key(id), Error::<T>::ProductIdExists);
-
-    //     let product = Product {
-    //         id,
-    //         name,
-    //         description,
-    //         owner: sender.clone(),
-    //         previous_owners: vec![],
-    //         timestamp: <frame_system::Pallet<T>>::block_number(),
-    //     };
-
-    //     Products::<T>::insert(id, product);
-    //     Self::deposit_event(Event::ProductCreated(sender, id));
-    //     Ok(())
-    // }
-
-    // pub fn transfer_product(
-    //     origin: OriginFor<T>,
-    //     id: u64,
-    //     to: T::AccountId,
-    // ) -> DispatchResult {
-    //     let sender = ensure_signed(origin)?;
-    //     let mut product = Products::<T>::get(id).ok_or(Error::<T>::ProductIdNotFound)?;
-    //     ensure!(product.owner == sender, Error::<T>::NotProductOwner);
-
-    //     product.previous_owners.push(sender.clone());
-    //     product.owner = to.clone();
-
-    //     Products::<T>::insert(id, product);
-    //     Self::deposit_event(Event::ProductTransferred(sender, to, id));
-    //     Ok(())
-    // }
-
-    // pub fn get_product(id: u64) -> Option<Product> {
-    //     Products::<T>::get(id)
-    // }
-}
 }
