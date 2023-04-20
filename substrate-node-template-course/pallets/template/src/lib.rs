@@ -43,6 +43,12 @@ pub mod pallet {
 		pub about_me: Vec<u64>,
 	}
 
+	///storage map to interact with the node's storage
+	#[pallet::storage]
+	#[pallet::getter(fn company_info)]
+	pub type AccountToCompany<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Company, ValueQuery>;
+
+
 	///Contract data
 	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
 	pub struct SupplyContract{
@@ -58,6 +64,12 @@ pub mod pallet {
 		pub contract_fulfilled : bool,
 	}
 
+	///storage map to interact with the node's storage
+	#[pallet::storage]
+	#[pallet::getter(fn supply_contract_info)]
+	pub type AccountToSupplyContract<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, SupplyContract, ValueQuery>;
+
+
 	///product data
 	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
 	pub struct Product{
@@ -69,6 +81,12 @@ pub mod pallet {
 		pub timestamp: u64,
 	}
 
+	///storage map to interact with the node's storage
+	#[pallet::storage]
+	#[pallet::getter(fn product_info)]
+	pub type AccountToProduct<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Product, ValueQuery>;
+
+
 	///IOU data
 	#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo)]
 	pub struct IOU{
@@ -78,11 +96,19 @@ pub mod pallet {
 		pub amount: u64,
 	}
 
+	///storage map to interact with the node's storage
+	#[pallet::storage]
+	#[pallet::getter(fn iou_info)]
+	pub type AccountToIOU<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, IOU, ValueQuery>;
+
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+
+	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
