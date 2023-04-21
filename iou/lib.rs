@@ -106,13 +106,6 @@ mod iou {
         //allow a debtor to pay the issuer by an amount
         #[ink(message)]
         pub fn pay_debt(&mut self, amount: Balance) {
-            //ensure only the person that owes the money can pay the debt
-            assert_eq!(
-                self.issuer,
-                Self::env().caller(),
-                "Only creditor can deposit tokens"
-            );
-
             self.amount_owed -= amount;
             let from = self.env().caller();
             let to = self.recipient;
