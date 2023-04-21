@@ -16,7 +16,7 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::{*, DispatchResult};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use sp_std::prelude::*;
 
@@ -40,7 +40,7 @@ pub mod pallet {
 		///company name stored as an array of bytes
 		pub name: Vec<u8>,
 		///companys about information
-		pub about_me: Vec<u64>,
+		pub about_me: Vec<u8>,
 	}
 
 	///storage map to interact with the node's storage
@@ -132,7 +132,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			name: Vec<u8>,
 			id: u64,
-			about_me: Vec<u64>,
+			about_me: Vec<u8>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(name.len() <= 64, Error::<T>::CompanynameTooLong);
@@ -190,10 +190,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// 		pub id: u64,
-		// pub debtor: u64,
-		// pub creditor: u64,
-		// pub amount: u64,
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn create_iou(
 			origin: OriginFor<T>,
