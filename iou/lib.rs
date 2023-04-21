@@ -26,6 +26,13 @@ mod iou {
         value: Balance,
     }
 
+    #[ink(event)]
+    pub struct Deposit {
+        #[ink(topic)]
+        to: Option<AccountId>,
+        value: Balance,
+    }
+
     //emit a supply contract instance to the blockchain
     #[ink(event)]
     pub struct IouContract {
@@ -112,6 +119,25 @@ mod iou {
             let value = amount;
 
             self.transfer_from_to(&from, &to, value);
+        }
+        
+        #[ink(message)]
+        pub fn public_account_balance(&self) -> Balance {
+            self.balance_of_account(&self.env().caller())
+        }
+
+        #[ink(message)]
+        pub fn deposit(&mut self, amount: Balance) {
+            //add tokens to one callers account
+            let to = self.env().caller();
+            let value = amount;
+
+            let to_balance = self.balance_of_account(&to);
+            self.balances.insert(to, &(to_balance + value));
+            self.env().emit_event(Deposit {
+                to: Some(to),
+                value,
+            });
         }
 
         fn balance_of_account(&self, owner: &AccountId) -> Balance {
